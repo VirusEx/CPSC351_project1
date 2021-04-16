@@ -39,8 +39,8 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	 */
 
 
-	 shmid = SHARED_MEMORY_CHUNK_SIZE;
-	 *sharedMemPtr = shmid;
+	 shmid = shmget(my_key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT);
+	 *sharedMemPtr = (char*) shmat(shmid, (void*)0,0);
 	 msqid = shmid;
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
 	/* TODO: Attach to the shared memory */
@@ -58,7 +58,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
-	*sharedMemPtr = nullptr;
+	*shmdt(sharedMemPtr);
 	/* TODO: Detach from shared memory */
 }
 
@@ -102,10 +102,11 @@ void send(const char* fileName)
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * (message of type SENDER_DATA_TYPE)
  		 */
-
+		 sndMsg(SENDER_DATA_TYPE, SHARED_MEMORY_CHUNK_SIZE);
 		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us
  		 * that he finished saving the memory chunk.
  		 */
+		 rcvMsg(RECV_DONE_TYPE, SHARED_MEMORY_CHUNK_SIZE);
 	}
 
 
@@ -113,7 +114,7 @@ void send(const char* fileName)
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0.
 	  */
-
+		sndMsg(SENDER_DATA_TYPE, 0);
 
 	/* Close the file */
 	fclose(fp);
